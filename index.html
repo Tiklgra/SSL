@@ -193,7 +193,6 @@
     -webkit-backdrop-filter: blur(14px) saturate(180%);
     border-bottom: 1px solid var(--border);
     transition: transform 0.3s ease, box-shadow 0.2s ease, background 0.2s ease;
-    will-change: transform;
   }
   nav.topnav.scrolled {
     box-shadow: 0 6px 24px rgba(13, 35, 41, 0.07);
@@ -2057,28 +2056,29 @@
     });
   }
 
-  /* ---- Sticky nav: shadow when scrolled + auto-hide on scroll down, reveal on scroll up ---- */
+  /* ---- Sticky nav: shadow when scrolled + auto-hide on scroll down, reveal on scroll up ----
+     Reveal is instant on ANY upward movement; hiding requires a clear downward delta so that
+     small scroll/momentum jitters can never re-hide the bar while you're scrolling up. */
   const nav = document.querySelector('nav.topnav');
   if (nav) {
     let lastY = window.scrollY;
     let ticking = false;
-    const DELTA = 6; // ignore tiny scroll jitters
+    const DOWN_TOL = 5; // a hide needs at least this much clear downward movement
     const update = () => {
-      const y = Math.max(window.scrollY, 0);
-      nav.classList.toggle('scrolled', y > 8);
-      if (Math.abs(y - lastY) > DELTA) {
-        if (y > lastY && y > nav.offsetHeight) {
-          nav.classList.add('nav-hidden');     // scrolling down → hide
-        } else if (y < lastY) {
-          nav.classList.remove('nav-hidden');  // scrolling up → reveal
-        }
-        lastY = y;
-      }
-      if (y <= 8) nav.classList.remove('nav-hidden'); // always visible at the top
       ticking = false;
+      const y = window.scrollY < 0 ? 0 : window.scrollY;
+      nav.classList.toggle('scrolled', y > 8);
+      if (y <= 8) {
+        nav.classList.remove('nav-hidden');                 // at the very top → always visible
+      } else if (y > lastY + DOWN_TOL && y > nav.offsetHeight) {
+        nav.classList.add('nav-hidden');                    // clear downward scroll → hide
+      } else if (y < lastY) {
+        nav.classList.remove('nav-hidden');                 // any upward scroll → reveal
+      }
+      lastY = y;
     };
     window.addEventListener('scroll', () => {
-      if (!ticking) { requestAnimationFrame(update); ticking = true; }
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
     }, { passive: true });
     /* Keep the bar reachable for keyboard users: reveal when a link inside gets focus */
     nav.addEventListener('focusin', () => nav.classList.remove('nav-hidden'));
