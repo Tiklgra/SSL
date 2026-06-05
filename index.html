@@ -74,7 +74,7 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; overflow-x: hidden; }
+  html { scroll-behavior: smooth; overflow-x: clip; }
   body {
     font-family: var(--sans);
     background: var(--bg);
@@ -101,7 +101,9 @@
   /* Page wrapper with blob backgrounds for that ProHealth feel */
   .page-bg {
     position: relative;
-    overflow-x: hidden;  /* only block horizontal, allow vertical scroll */
+    /* clip the decorative blobs WITHOUT becoming a scroll container.
+       (overflow-x: hidden forced overflow-y: auto, which trapped touch scrolling on mobile) */
+    overflow: clip;
   }
   .page-bg::before {
     content: '';
